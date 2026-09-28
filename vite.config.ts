@@ -6,11 +6,15 @@ import { createHash } from 'node:crypto';
 /** 构建期把带 hash 的 JS/CSS 与核心资源写进 SW 预缓存清单（不靠运行时顺手缓存）。
  * closeBundle 在产物全部写入后执行，直接扫描 dist（含 public 拷贝的图片）。 */
 function swPrecachePlugin(): Plugin {
+  let outDir = 'dist';
   return {
     name: 'sw-precache-inject',
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
     closeBundle() {
       const root = process.cwd();
-      const dist = resolve(root, 'dist');
+      const dist = resolve(root, outDir);
       const walk = (dir: string): string[] => {
         const out: string[] = [];
         for (const name of readdirSync(dir)) {
