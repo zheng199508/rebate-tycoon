@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#101018" />
+  <title>像素冒险</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <script type="module" crossorigin src="./assets/index-0XoqVtA1.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-vroR91Pp.css">
+</head>
+<body>
+  <!-- 竖屏旋转提示页：必须是 body 直接子节点，位于游戏容器【外面】 -->
+  <div id="rotate-prompt">
+    <svg class="rotate-phone" viewBox="0 0 64 64" width="88" height="88" aria-hidden="true">
+      <g fill="none" stroke="#8ab4f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="22" y="6" width="20" height="52" rx="5" />
+        <line x1="28" y1="52" x2="36" y2="52" />
+      </g>
+      <path class="rotate-arrow" d="M46 12 A14 14 0 1 1 46 40" fill="none" stroke="#ffd54a" stroke-width="3" stroke-linecap="round" />
+      <polygon class="rotate-arrowhead" points="46,40 41,32 51,32" fill="#ffd54a" />
+    </svg>
+    <p class="rotate-text">请横屏游玩</p>
+  </div>
+
+  <!-- 游戏容器：横屏时可见，竖屏时隐藏 -->
+  <div id="game-container">
+    <div id="phaser-root" aria-hidden="true"></div>
+
+    <!-- 标题页 -->
+    <section id="title-screen" aria-label="标题页">
+      <h1 class="game-title">像素冒险</h1>
+      <p class="game-sub">像素 · 横屏 · 离线冒险（暂定名）</p>
+
+      <div class="name-row">
+        <label class="name-label" for="player-name">你的名字</label>
+        <input id="player-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <button id="btn-new" class="main-btn" type="button">新的游戏</button>
+      <button id="btn-continue" class="main-btn" type="button" disabled>继续游戏</button>
+      <button id="btn-title-music" class="ghost-btn" type="button">♪ BGM 点歌台</button>
+
+      <p id="title-tip" class="title-tip" role="status"></p>
+    </section>
+
+    <!-- 世界 HUD：十字键 / 目标提示 / 对话框（进入游戏后才显示） -->
+    <div id="world-ui" hidden>
+      <div id="dpad">
+        <button class="dpad-btn" data-dir="up" type="button" style="grid-area: 1 / 2;">▲</button>
+        <button class="dpad-btn" data-dir="left" type="button" style="grid-area: 2 / 1;">◀</button>
+        <button class="dpad-btn" data-dir="down" type="button" style="grid-area: 2 / 2;">▼</button>
+        <button class="dpad-btn" data-dir="right" type="button" style="grid-area: 2 / 3;">▶</button>
+      </div>
+
+      <div id="objective-bar">
+        <span id="objective-text">目标：…</span>
+        <button id="btn-guide" type="button">指路</button>
+      </div>
+
+      <!-- 顶部 HUD：余额 + 系统按钮 + 教学提示 -->
+      <div id="top-hud">
+        <div id="money-box">余额 <span id="money-text">¥0</span></div>
+        <button id="btn-music" type="button">♪</button>
+        <button id="btn-sys" type="button">系统</button>
+      </div>
+      <div id="tutorial-tip" hidden></div>
+
+      <!-- 商店购买小窗 -->
+      <div id="shop-panel" hidden>
+        <div class="shop-card">
+          <div id="shop-name">商品</div>
+          <div id="shop-price">¥0</div>
+          <button id="shop-buy" class="main-btn" type="button">购买</button>
+          <button id="shop-leave" class="ghost-btn" type="button">离开</button>
+        </div>
+      </div>
+
+      <!-- 返利揭晓层 -->
+      <div id="reveal" hidden>
+        <div class="reveal-title">【叮！返利系统】</div>
+        <div id="reveal-mult">×?</div>
+        <div id="reveal-gain"></div>
+      </div>
+
+      <!-- 系统面板：账本 / 任务 / 技能 -->
+      <div id="sys-panel" hidden>
+        <div class="sys-card">
+          <div class="sys-tabs">
+            <button class="sys-tab" data-tab="ledger" type="button">账本</button>
+            <button class="sys-tab" data-tab="tasks" type="button">任务</button>
+            <button class="sys-tab" data-tab="skills" type="button">技能</button>
+          </div>
+          <div id="sys-content"></div>
+          <button id="sys-close" class="ghost-btn" type="button">关闭</button>
+        </div>
+      </div>
+
+      <div id="dialog-box" hidden>
+        <div id="dialog-name"></div>
+        <img id="dialog-avatar" alt="" />
+        <div id="dialog-text"></div>
+        <div id="dialog-triangle">▼</div>
+      </div>
+    </div>
+
+    <!-- BGM 点歌台（标题页与游戏内都可用，置于 world-ui 外） -->
+    <div id="music-panel" hidden>
+      <div class="sys-card">
+        <div class="sys-tabs">音乐点歌台</div>
+        <div id="music-track-name">—</div>
+        <div class="music-rows">
+          <button id="music-prev" type="button">◀◀</button>
+          <button id="music-toggle" type="button">▶ 播放</button>
+          <button id="music-next" type="button">▶▶</button>
+        </div>
+        <label class="music-opt"><input type="checkbox" id="opt-sfx" /> 音效</label>
+        <label class="music-opt"><input type="checkbox" id="opt-speak" /> 系统朗读</label>
+        <button id="music-close" class="ghost-btn" type="button">关闭</button>
+      </div>
+    </div>
+
+    <div id="toast" role="status"></div>
+  </div>
+
+  <!-- 新版本更新横幅：玩家点“保存并更新”才刷新，不静默抢跑 -->
+  <div id="update-banner" hidden>
+    <span>新版本已就绪</span>
+    <button id="btn-update" type="button">保存并更新</button>
+  </div>
+
+  <!-- 启动看门狗：加载异常层（body 直接子节点，任何情况下不许纯黑屏） -->
+  <div id="boot-error">
+    <div class="boot-card">
+      <p class="boot-title">加载异常</p>
+      <p class="boot-sub">启动 8 秒内界面未能正常渲染</p>
+      <div class="boot-actions">
+        <button id="btn-retry" class="boot-btn" type="button">重试</button>
+        <button id="btn-force-reset" class="boot-btn" type="button">强制清缓存重下</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 启动看门狗（内联，先于主包执行）=====
+    (function () {
+      var ready = false;
+      window.__setAppReady = function () { ready = true; setBootError(false); };
+      function setBootError(show) {
+        var el = document.getElementById('boot-error');
+        if (el) { if (show) { el.classList.add('show'); } else { el.classList.remove('show'); } }
+      }
+      function forceShow() { if (!ready) setBootError(true); }
+      // 主包抛错 / 加载失败：立即亮出异常层，绝不允许黑屏
+      window.addEventListener('error', forceShow);
+      window.addEventListener('unhandledrejection', forceShow);
+      // 8 秒看门狗：界面没渲染出来就亮异常层
+      setTimeout(forceShow, 8000);
+      document.addEventListener('DOMContentLoaded', function () {
+        var retry = document.getElementById('btn-retry');
+        var force = document.getElementById('btn-force-reset');
+        retry.addEventListener('click', function () { location.reload(); });
+        force.addEventListener('click', function () {
+          if ('caches' in window) {
+            caches.keys().then(function (ks) {
+              return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+            }).catch(function () {});
+          }
+          location.reload();
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>
